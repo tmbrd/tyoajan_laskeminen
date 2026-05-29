@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Työajan laskuri</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    h1 { text-align: center; }
+    .segment {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 10px;
+      margin-bottom: 15px;
+      align-items: end;
+    }
+    label { display: block; margin-bottom: 5px; }
+    input {
+      padding: 8px;
+      font-size: 16px;
+      width: 100%;
+    }
+    button {
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .delete-btn {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+    }
+    .total {
+      font-size: 1.5em;
+      font-weight: bold;
+      text-align: center;
+      margin: 30px 0;
+      padding: 15px;
+      background: #e8f5e9;
+      border-radius: 8px;
+    }
+    .add-btn {
+      background-color: #27ae60;
+      color: white;
+      padding: 12px 20px;
+      font-size: 16px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Työajan laskuri</h1>
+
+  <div id="segments"></div>
+
+  <button class="add-btn" onclick="addSegment()">+ Lisää aikaväli</button>
+
+  <div class="total" id="totalTime">Työaika yhteensä: 0,00 h</div>
+
+  <script>
+    let segmentCount = 0;
+
+    function addSegment() {
+      segmentCount++;
+      const segmentsDiv = document.getElementById('segments');
+      
+      const segment = document.createElement('div');
+      segment.className = 'segment';
+      segment.id = `segment-${segmentCount}`;
+      
+      segment.innerHTML = `
+        <div>
+          <label>Saapuminen</label>
+          <input type="time" class="start-time" onchange="calculateTotal()">
+        </div>
+        <div>
+          <label>Lähtö</label>
+          <input type="time" class="end-time" onchange="calculateTotal()">
+        </div>
+        <button class="delete-btn" onclick="removeSegment(${segmentCount})">Poista</button>
+      `;
+      
+      segmentsDiv.appendChild(segment);
+      calculateTotal();
+    }
+
+    function removeSegment(id) {
+      const segment = document.getElementById(`segment-${id}`);
+      if (segment) {
+        segment.remove();
+        calculateTotal();
+      }
+    }
+
+    function timeToMinutes(timeStr) {
+      if (!timeStr) return 0;
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      return hours * 60 + minutes;
+    }
+
+    function calculateTotal() {
+      const segments = document.querySelectorAll('.segment');
+      let totalMinutes = 0;
+
+      segments.forEach(segment => {
+        const startTime = segment.querySelector('.start-time').value;
+        const endTime = segment.querySelector('.end-time').value;
+
+        if (startTime && endTime) {
+          const startMin = timeToMinutes(startTime);
+          const endMin = timeToMinutes(endTime);
+          
+          let diff = endMin - startMin;
+          
+          // Jos loppu on seuraavana päivänä (esim. yövuoro)
+          if (diff < 0) diff += 24 * 60;
+          
+          totalMinutes += diff;
+        }
+      });
+
+      const totalHours = (totalMinutes / 60).toFixed(2).replace('.', ',');
+      document.getElementById('totalTime').textContent = `Työaika yhteensä: ${totalHours} h`;
+    }
+
+    // Lisätään ensimmäinen rivi automaattisesti
+    window.onload = () => {
+      addSegment();
+    };
+  </script>
+</body>
+</html>
